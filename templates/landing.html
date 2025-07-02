@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .search-container {
+            max-width: 600px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        #search-input {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 18px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%239aa0a6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 20px 20px;
+            padding-left: 45px;
+        }
+        #search-input:focus {
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        #results-container {
+            margin-top: 20px;
+            text-align: left;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+            display: none;
+        }
+        .result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f1f1;
+            cursor: pointer;
+        }
+        .result-item:hover {
+            background-color: #f8f9fa;
+        }
+        .stock-badge {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .in-stock {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        .out-of-stock {
+            background-color: #fce8e6;
+            color: #d93025;
+        }
+        .selected {
+            background-color: #f1f3f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1 class="mb-4">Inventory Search</h1>
+        <input type="text" id="search-input" placeholder="Search products..." autocomplete="off">
+        <div id="results-container"></div>
+    </div>
+
+    <div class="text-center mt-3">
+        <button id="createBillBtn" class="btn btn-success">
+            <i class="bi bi-receipt"></i> Create New Bill
+        </button>
+    </div>
+
+    <script type="module" src="{{ url_for('static', filename='js/modules/billManager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landing_search.js') }}"></script>
+<script>
+    document.getElementById('createBillBtn').addEventListener('click', async function() {
+        try {
+            const response = await fetch('/api/temp_bills', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.bill_id) {
+                window.location.href = `/temp_bill/edit/${result.bill_id}`;
+            } else {
+                console.error('Failed to create bill:', result.error || 'Unknown error');
+                alert('Failed to create bill. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error creating bill:', error);
+            alert('An error occurred while creating the bill.');
+        }
+    });
+</script>
+</body>
+</html>

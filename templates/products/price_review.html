@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Review Price Changes</h2>
+    <form method="POST" action="{{ url_for('apply_price_changes') }}">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product</th>
+                        <th>Current Price</th>
+                        <th>New Price</th>
+                        <th>Confidence</th>
+                        <th>Approve</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for change in changes %}
+                    <tr>
+                        <td>{{ change.description }}</td>
+                        <td>₹{{ "%.2f"|format(change.old_price) }}</td>
+                        <td>
+                            <input type="number" step="0.01" 
+                                   class="form-control form-control-sm"
+                                   name="price_{{ change.product_id }}" 
+                                   value="{{ "%.2f"|format(change.new_price) }}">
+                        </td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar" 
+                                     role="progressbar" 
+                                     style="width: {{ change.confidence }}%" 
+                                     aria-valuenow="{{ change.confidence }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ change.confidence }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" 
+                                   name="approve_{{ change.product_id }}" 
+                                   {% if change.confidence > 85 %}checked{% endif %}
+                                   class="form-check-input">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-primary">Apply Selected Changes</button>
+        <a href="{{ url_for('view_products') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

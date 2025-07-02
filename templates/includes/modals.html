@@ -1,0 +1,137 @@
+<!-- templates/includes/modals.html -->
+<!-- Price History Modal -->
+<div class="modal fade" id="priceHistoryModal" tabindex="-1" aria-labelledby="priceHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="priceHistoryModalLabel">Price History for <span id="productName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Old Price</th>
+                                <th>New Price</th>
+                                <th>Changed By</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="uploadModalLabel">Upload Catalog PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="pdf-upload-form" action="{{ url_for('catalog.process') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="catalog-pdf" class="form-label">Select PDF File</label>
+                        <input class="form-control" type="file" id="catalog-pdf" name="file" accept=".pdf" required>
+                        <div class="form-text">Max 10MB. Should contain updated product prices.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span id="upload-button-text">Process</span>
+                        <span id="upload-spinner" class="spinner-border spinner-border-sm d-none"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmActionButton">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="quickViewModalLabel">Product Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="quickViewContent">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="editProductButton">Edit Product</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu (Not a Bootstrap modal but included for completeness) -->
+<div id="contextMenu" class="dropdown-menu shadow" style="display: none; position: absolute; z-index: 1000;">
+    <button class="dropdown-item" id="contextEdit"><i class="bi bi-pencil me-2"></i>Edit</button>
+    <button class="dropdown-item" id="contextDelete"><i class="bi bi-trash me-2"></i>Delete</button>
+    <button class="dropdown-item" id="contextHistory"><i class="bi bi-clock-history me-2"></i>View History</button>
+</div>
+
+<script>
+// Initialize modals with default configuration
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all modals
+    const modals = ['priceHistoryModal', 'uploadModal', 'confirmationModal', 'quickViewModal'];
+    modals.forEach(modalId => {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            new bootstrap.Modal(modalElement);
+        }
+    });
+
+    // Setup confirmation modal handler
+    const confirmModal = document.getElementById('confirmationModal');
+    if (confirmModal) {
+        confirmModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const action = button.getAttribute('data-action');
+            const message = button.getAttribute('data-message');
+            
+            document.getElementById('confirmationMessage').textContent = message || 'Are you sure you want to perform this action?';
+            document.getElementById('confirmActionButton').onclick = function() {
+                if (action) {
+                    window.location.href = action;
+                }
+            };
+        });
+    }
+});
+</script>

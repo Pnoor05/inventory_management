@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Temporary Bill Editor{% endblock %}
+
+{% block content %}
+<div id="temp-bill-app"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { createApp } from 'vue';
+    import TempBillApp from '/static/js/temp_bill/TempBillApp.js';
+
+    createApp(TempBillApp).mount('#temp-bill-app');
+</script>
+{% endblock %}

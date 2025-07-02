@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Inventory Management System</h1>
+    <p class="lead">Manage your electrical products inventory</p>
+    <hr class="my-4">
+    <a class="btn btn-primary btn-lg" href="{{ url_for('products.list') }}" role="button">
+        View Products
+    </a>
+</div>
+{% endblock %}

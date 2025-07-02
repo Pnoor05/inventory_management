@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Add New Product</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <!-- Category Selection with Add Option -->
+        <div class="mb-3 row">
+            <div class="col-md-10">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category_id" required onchange="loadSpecifications()">
+                    <option value="">Select a category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                    <i class="bi bi-plus-lg"></i> New Category
+                </button>
+            </div>
+        </div>
+
+        <!-- New Category Modal -->
+        <div class="modal fade" id="newCategoryModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="newCategoryName" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="newCategoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category Type</label>
+                            <select class="form-select" id="newCategoryType">
+                                <option value="standard">Standard</option>
+                                <option value="switches">Switches</option>
+                                <option value="tubelights">Tubelights</option>
+                                <option value="pipes">Pipes</option>
+                                <option value="wires">Wires</option>
+                                <option value="panels">Panels</option>
+                                <option value="led">LED</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="addNewCategory()">Add Category</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Specifications Container -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Product Specifications</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCustomSpecification()">
+                    <i class="bi bi-plus"></i> Add Custom Spec
+                </button>
+            </div>
+            <div class="card-body" id="specifications-container">
+                <p class="text-muted">Select a category to view specifications</p>
+            </div>
+        </div>
+
+        <!-- Basic Product Info -->
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description" required>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="brand" class="form-label">Brand</label>
+                <input type="text" class="form-control" id="brand" name="brand" required>
+            </div>
+            <div class="col-md-3">
+                <label for="unit_price" class="form-label">Unit Price (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="unit_price" name="unit_price" required>
+            </div>
+            <div class="col-md-3">
+                <label for="quantity" class="form-label">Quantity</label>
+                <input type="number" class="form-control" id="quantity" name="quantity_in_stock" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Product</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load specifications when category changes
+async function loadSpecifications() {
+    const categoryId = document.getElementById('category').value;
+    const container = document.getElementById('specifications-container');
+    
+    if (!categoryId) {
+        container.innerHTML = '<p class="text-muted">Select a category to view specifications</p>';
+        return;
+    }
+
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center my-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading specifications...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/get_specifications?category_id=${categoryId}`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        
+        const specs = await response.json();
+        
+        let html = '<div class="specifications-form">';
+        if (specs.length === 0) {
+            html += '<p class="text-muted">No specifications required for this category</p>';
+        } else {
+            specs.forEach(spec => {
+                html += `
+                    <div class="mb-3">
+                        <label for="spec_${spec.name}" class="form-label">${spec.label || spec.name.replace('_', ' ').title()}</label>
+                        <input type="text" class="form-control" 
+                               id="spec_${spec.name}" name="spec_${spec.name}" 
+                               ${spec.required ? 'required' : ''}>
+                        ${spec.description ? `<small class="form-text text-muted">${spec.description}</small>` : ''}
+                    </div>
+                `;
+            });
+        }
+        container.innerHTML = html + '</div>';
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <p>Failed to load specifications</p>
+                <button class="btn btn-sm btn-outline-danger mt-2" onclick="loadSpecifications()">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Add new category
+async function addNewCategory() {
+    const name = document.getElementById('newCategoryName').value;
+    const type = document.getElementById('newCategoryType').value;
+    
+    if (!name) {
+        alert('Please enter a category name');
+        return;
+    }
+
+    try {
+        const response = await fetch('/add_category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ name, type })
+        });
+        
+        if (!response.ok) throw new Error('Failed to add category');
+        
+        const result = await response.json();
+        const select = document.getElementById('category');
+        
+        // Add new option and select it
+        const option = new Option(name, result.id);
+        select.add(option);
+        select.value = result.id;
+        
+        // Close modal and reset
+        bootstrap.Modal.getInstance(document.getElementById('newCategoryModal')).hide();
+        document.getElementById('newCategoryName').value = '';
+        
+        // Load specifications for new category
+        loadSpecifications();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to add category: ' + error.message);
+    }
+}
+
+// Add custom specification
+function addCustomSpecification() {
+    const container = document.getElementById('specifications-container');
+    const specId = Date.now(); // Temporary ID
+    
+    const html = `
+        <div class="mb-3" id="custom-spec-${specId}">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Specification name" name="custom_spec_name[]" required>
+                <input type="text" class="form-control" placeholder="Value" name="custom_spec_value[]" required>
+                <button class="btn btn-outline-danger" type="button" onclick="document.getElementById('custom-spec-${specId}').remove()">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', html);
+}
+</script>
+{% endblock %}
